@@ -10,23 +10,29 @@
 @* Needed for snackbars *@
 <MudSnackbarProvider />
 
+
 <MudLayout>
-    <MudDrawer Open="true" DrawerType="DrawerType.Permanent" Elevation="1">
-        <NavMenu />
+    <MudAppBar>
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="DrawerToggle" />
+        My Application
+    </MudAppBar>
+    
+    <MudDrawer @bind-Open="@_drawerOpen">
+        <MyNavMenu />
     </MudDrawer>
 
-    <MudMainContent>
-        <MudAppBar Elevation="1">
-            <MudText Typo="Typo.h6">BlazorVoice</MudText>
-        </MudAppBar>
-        <article class="content px-4">
-            @Body
-        </article>
+    <MudMainContent MaxWidth="MaxWidth.Medium">
+        @Body
     </MudMainContent>
+
 </MudLayout>
 
-<div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
-</div>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private void DrawerToggle(MouseEventArgs e)
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}
