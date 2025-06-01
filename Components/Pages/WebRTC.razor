@@ -1,21 +1,32 @@
 ﻿@page "/web-rtc"
+@using System.Text.Json
 @rendermode InteractiveServer
 @inject IJSRuntime JSRuntime
 
 
-<h3>WebRTC</h3>
+<MudGrid Style="margin-left:20px" >
+    <MudText Typo="Typo.h4" GutterBottom="true">WebRTC</MudText>
 
-<div>
-    <video id="localVideo" autoplay muted></video>
-    <video id="remoteVideo" autoplay></video>
-</div>
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="p-2" Elevation="4">
+                <video id="localVideo" autoplay muted style="width: 100%; border-radius: 8px;"></video>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="p-2" Elevation="4">
+                <video id="remoteVideo" autoplay style="width: 100%; border-radius: 8px;"></video>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
 
-<div class="audio-level">
-    <div class="audio-bar" style="width:@AudioLevel%;"></div>
-</div>
+    <MudText Typo="Typo.subtitle1" Class="mt-4">오디오바</MudText>
+    <MudProgressLinear Value="@AudioLevel" Class="mt-2" />
 
-
-<button @onclick="StartWebRTC">Start WebRTC</button>
+    <MudButton  OnClick="StartWebRTC" Class="mt-4">
+        Start WebRTC
+    </MudButton>
+</MudGrid>
 
 @code {
 
@@ -27,12 +38,53 @@
         await JSRuntime.InvokeVoidAsync("startWebRTC", "localVideo", "remoteVideo", dotNetRef);
     }
 
+
     [JSInvokable]
-    public void UpdateAudioLevel(double level)
+    public async Task SendAudioData(string audioDataJson)
     {
-        AudioLevel = Math.Clamp(level, 0, 100); // Ensure value is between 0 and 100
-        Console.WriteLine($"AudioLevel updated: {AudioLevel}"); // Debugging output
-        StateHasChanged(); // Refresh UI
+        try
+        {
+            // Parse JSON data
+            var data = JsonSerializer.Deserialize<Dictionary<string, object>>(audioDataJson);
+            if (data != null && data.ContainsKey("volume") && data.ContainsKey("audioData"))
+            {
+                // Validate volume
+                if (data["volume"] is JsonElement volumeElement && volumeElement.TryGetDouble(out var volume))
+                {
+                    // Validate audioData
+                    if (data["audioData"] is JsonElement audioDataElement && audioDataElement.ValueKind == JsonValueKind.Array)
+                    {
+                        var audioBytes = audioDataElement.EnumerateArray().Select(x => (byte)x.GetInt32()).ToArray();
+
+                        // Update UI with volume
+                        AudioLevel = Math.Clamp(volume, 0, 100);
+                        StateHasChanged();
+
+                        // Debugging output
+                        Console.WriteLine($"Valid audio data received. Volume: {volume}, Data size: {audioBytes.Length} bytes");
+
+                        // Send audio data to SignalR server (if needed)
+                        // await HubContext.Clients.All.SendAsync("SendAudioData", audioBytes);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid audioData format.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Invalid volume format.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Invalid audio data structure.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in SendAudioData: {ex.Message}");
+        }
     }
 
 }
