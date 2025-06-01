@@ -1,0 +1,38 @@
+﻿@page "/web-rtc"
+@rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
+
+
+<h3>WebRTC</h3>
+
+<div>
+    <video id="localVideo" autoplay muted></video>
+    <video id="remoteVideo" autoplay></video>
+</div>
+
+<div class="audio-level">
+    <div class="audio-bar" style="width:@AudioLevel%;"></div>
+</div>
+
+
+<button @onclick="StartWebRTC">Start WebRTC</button>
+
+@code {
+
+    private double AudioLevel { get; set; } = 0;
+
+    private async Task StartWebRTC()
+    {
+        var dotNetRef = DotNetObjectReference.Create(this);
+        await JSRuntime.InvokeVoidAsync("startWebRTC", "localVideo", "remoteVideo", dotNetRef);
+    }
+
+    [JSInvokable]
+    public void UpdateAudioLevel(double level)
+    {
+        AudioLevel = Math.Clamp(level, 0, 100); // Ensure value is between 0 and 100
+        Console.WriteLine($"AudioLevel updated: {AudioLevel}"); // Debugging output
+        StateHasChanged(); // Refresh UI
+    }
+
+}
