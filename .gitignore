@@ -35,7 +35,7 @@ project.fragment.lock.json
 
 
 # Ignore Blazor-specific files
-wwwroot/
+wwwroot/bootstrap
 node_modules/
 dist/
 libman.json

@@ -1,0 +1,13 @@
+﻿
+.webrtc-container {       
+    margin-left: 50px;
+    margin-top: 50px;
+    max-width: 1200px; /* Optional: Limit the container width */
+}
+
+.video-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}

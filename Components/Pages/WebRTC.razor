@@ -1,35 +1,44 @@
 ﻿@page "/web-rtc"
-@using System.Text.Json
 @rendermode InteractiveServer
+@using System.Text.Json
 @inject IJSRuntime JSRuntime
 
+<PageTitle>WebRTC</PageTitle>
 
-<MudGrid Style="margin-left:20px" >
-    <MudText Typo="Typo.h4" GutterBottom="true">WebRTC</MudText>
+<h1>WebRTC</h1>
 
-    <MudGrid>
-        <MudItem xs="12" md="6">
-            <MudPaper Class="p-2" Elevation="4">
-                <video id="localVideo" autoplay muted style="width: 100%; border-radius: 8px;"></video>
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" md="6">
-            <MudPaper Class="p-2" Elevation="4">
-                <video id="remoteVideo" autoplay style="width: 100%; border-radius: 8px;"></video>
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
+<MudGrid>    
+    <MudItem xs="6">
+        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+            <video id="remoteVideo" autoplay style="width: 100%; border-radius: 8px;"></video>            
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="6">
+        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+            <video id="localVideo" autoplay muted style="width: 20%; border-radius: 8px;"></video>
+        </MudPaper>
+    </MudItem>
+   
+    <MudItem xs="12">
+        
+            <MudStack>
+                <MudPaper Class="pa-3">
+                    <MudText Typo="Typo.subtitle1" Class="mt-4">오디오바</MudText>
+                    <MudProgressLinear Value="@AudioLevel" Class="mt-2" />
+                </MudPaper>
+                <MudPaper Class="pa-3">
+                    <MudText Typo="Typo.subtitle1" Class="mt-4">마이크 볼륨 조절</MudText>
+                    <MudSlider @bind-Value="MicrophoneVolume" Min="0" Max="100" Step="1" Class="mt-2" />
+                </MudPaper>
+                <MudPaper Class="pa-3">
+                    <MudButton OnClick="StartWebRTC" Class="mt-4">
+                        Start WebRTC
+                    </MudButton>
+                </MudPaper>
+            </MudStack>
+        
+    </MudItem>
 
-    <MudText Typo="Typo.subtitle1" Class="mt-4">오디오바</MudText>
-    <MudProgressLinear Value="@AudioLevel" Class="mt-2" />
-
-    <MudText Typo="Typo.subtitle1" Class="mt-4">마이크 볼륨 조절</MudText>
-    <MudSlider @bind-Value="MicrophoneVolume" Min="0" Max="100" Step="1" Class="mt-2" />
-
-
-    <MudButton  OnClick="StartWebRTC" Class="mt-4">
-        Start WebRTC
-    </MudButton>
 </MudGrid>
 
 @code {
