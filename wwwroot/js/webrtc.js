@@ -3,6 +3,41 @@ let analyser;
 let dataArray;
 let gainNode;
 
+async function playAudioBytes(audioBytes) {
+    try {
+        // 오디오 컨텍스트 초기화 (전역에서 관리하거나 외부에서 주입 가능)
+        if (!audioContext || audioContext.state === 'closed') {
+            audioContext = new AudioContext();
+        }
+
+        // Uint8Array → Float32Array 로 변환
+        const float32Array = convertUint8ToFloat32(audioBytes);
+
+        // AudioBuffer 생성
+        const audioBuffer = audioContext.createBuffer(1, float32Array.length, audioContext.sampleRate);
+        audioBuffer.copyToChannel(float32Array, 0);
+
+        // 재생
+        const bufferSource = audioContext.createBufferSource();
+        bufferSource.buffer = audioBuffer;
+        bufferSource.connect(audioContext.destination);
+        bufferSource.start();
+    } catch (err) {
+        console.error("오디오 재생 중 오류 발생:", err);
+    }
+}
+
+// 바이트 데이터를 Float32 배열로 변환
+function convertUint8ToFloat32(uint8Array) {
+    const dataView = new DataView(uint8Array.buffer);
+    const float32Array = new Float32Array(uint8Array.byteLength / 4);
+
+    for (let i = 0; i < float32Array.length; i++) {
+        float32Array[i] = dataView.getFloat32(i * 4, true); // Little Endian
+    }
+
+    return float32Array;
+}
 
 async function startWebRTC(localVideoId, remoteVideoId, dotNetRef) {
     const localVideo = document.getElementById(localVideoId);
@@ -59,7 +94,8 @@ async function startWebRTC(localVideoId, remoteVideoId, dotNetRef) {
         .catch(error => console.error('Error accessing media devices.', error));
 }
 
-function setMicrophoneVolume(volume) {
+
+async function setMicrophoneVolume(volume) {
     if (gainNode) {
         gainNode.gain.value = volume / 100; // 볼륨을 0~1로 변환
     }

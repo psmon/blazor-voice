@@ -1,16 +1,17 @@
 ﻿@page "/web-rtc"
 @rendermode InteractiveServer
 @using System.Text.Json
+@inject BlazorVoice.Services.OpenAIService OpenAIService
 @inject IJSRuntime JSRuntime
 
 <PageTitle>WebRTC</PageTitle>
 
 <h1>WebRTC</h1>
 
-<MudGrid>    
+<MudGrid>
     <MudItem xs="6">
         <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-            <video id="remoteVideo" autoplay style="width: 100%; border-radius: 8px;"></video>            
+            <video id="remoteVideo" autoplay style="width: 100%; border-radius: 8px;"></video>
         </MudPaper>
     </MudItem>
     <MudItem xs="6">
@@ -18,33 +19,61 @@
             <video id="localVideo" autoplay muted style="width: 20%; border-radius: 8px;"></video>
         </MudPaper>
     </MudItem>
-   
+
+    <!-- 채팅창 -->
     <MudItem xs="12">
-        
+        <MudPaper Class="pa-3">
+            <MudButton OnClick="StartWebRTC" Class="mt-4">
+                Start WebRTC
+            </MudButton>
+        </MudPaper>
+        <MudPaper Class="pa-3">
+            <MudText Typo="Typo.subtitle1">채팅</MudText>
             <MudStack>
-                <MudPaper Class="pa-3">
-                    <MudText Typo="Typo.subtitle1" Class="mt-4">오디오바</MudText>
-                    <MudProgressLinear Value="@AudioLevel" Class="mt-2" />
-                </MudPaper>
-                <MudPaper Class="pa-3">
-                    <MudText Typo="Typo.subtitle1" Class="mt-4">마이크 볼륨 조절</MudText>
-                    <MudSlider @bind-Value="MicrophoneVolume" Min="0" Max="100" Step="1" Class="mt-2" />
-                </MudPaper>
-                <MudPaper Class="pa-3">
-                    <MudButton OnClick="StartWebRTC" Class="mt-4">
-                        Start WebRTC
-                    </MudButton>
-                </MudPaper>
+                <!-- 채팅 리스트 -->
+                <MudList T="string">
+                    @foreach (var chat in ChatMessages)
+                    {
+                        <MudListItem Text="@chat" Icon="@Icons.Material.Filled.Chat" />
+                    }
+                </MudList>
+                <!-- 채팅 입력 -->
+                <MudTextField @bind-Value="ChatInput" Placeholder="메시지를 입력하세요..." />
+
+
+                <MudButton OnClick="SendChatMessage" Class="mt-2">전송</MudButton>
             </MudStack>
-        
+        </MudPaper>
     </MudItem>
 
+    <MudItem xs="12">
+
+        <MudStack>
+            <MudPaper Class="pa-3">
+                <MudText Typo="Typo.subtitle1" Class="mt-4">오디오바</MudText>
+                <MudProgressLinear Value="@AudioLevel" Class="mt-2" />
+            </MudPaper>
+            <MudPaper Class="pa-3">
+                <MudText Typo="Typo.subtitle1" Class="mt-4">마이크 볼륨 조절</MudText>
+                <MudSlider @bind-Value="MicrophoneVolume" Min="0" Max="100" Step="1" Class="mt-2" />
+            </MudPaper>
+        </MudStack>
+
+    </MudItem>
+
+
+
+
 </MudGrid>
+
 
 @code {
 
     private double AudioLevel { get; set; } = 0;
     private double MicrophoneVolume { get; set; } = 10; // 초기 볼륨 값
+    private string ChatInput { get; set; } = string.Empty;
+    private List<string> ChatMessages { get; set; } = new();
+    private string SelectedChatOption { get; set; } = "EchoTTS";
 
     private async Task StartWebRTC()
     {
@@ -101,6 +130,44 @@
     private async Task UpdateMicrophoneVolume()
     {
         await JSRuntime.InvokeVoidAsync("setMicrophoneVolume", MicrophoneVolume);
+    }
+
+    private async Task SendChatMessage()
+    {
+        if (!string.IsNullOrWhiteSpace(ChatInput))
+        {
+            ChatMessages.Add($"[{SelectedChatOption}] {ChatInput}");
+
+            if (SelectedChatOption == "EchoTTS")
+            {
+                await HandleEchoTTS(ChatInput);
+            }
+            else if (SelectedChatOption == "TTS to LLM")
+            {
+                await HandleTTSToLLM(ChatInput);
+            }
+
+            ChatInput = string.Empty;
+        }
+    }
+
+    private async Task HandleEchoTTS(string message)
+    {
+        // EchoTTS 처리 로직
+        //await JSRuntime.InvokeVoidAsync("playTextAsSpeech", message);
+        ChatMessages.Add($"[Echo 응답] {message}");
+
+        var recVoice = await OpenAIService.ConvertTextToVoiceAsync(message); // TTS 처리
+
+        await JSRuntime.InvokeVoidAsync("playAudioBytes", recVoice);
+
+    }
+
+    private async Task HandleTTSToLLM(string message)
+    {
+        // TTS to LLM 처리 로직
+        //var response = await OpenAIService.GetResponseFromLLM(message);
+        ChatMessages.Add($"[LLM 응답] {message}");
     }
 
 }

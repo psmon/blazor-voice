@@ -16,6 +16,9 @@ builder.Services.AddSignalR(options =>
     options.MaximumReceiveMessageSize = 1024 * 1024; // 1MB
 });
 
+// OpenAIService를 DI 컨테이너에 등록
+builder.Services.AddSingleton<OpenAIService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
