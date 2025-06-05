@@ -3,7 +3,7 @@ let analyser;
 let dataArray;
 let gainNode;
 
-async function playAudioBytes(audioBytes) {
+async function playAudioBytes2(audioBytes) {
     try {
         // 오디오 컨텍스트 초기화 (전역에서 관리하거나 외부에서 주입 가능)
         if (!audioContext || audioContext.state === 'closed') {
@@ -20,6 +20,31 @@ async function playAudioBytes(audioBytes) {
         // 재생
         const bufferSource = audioContext.createBufferSource();
         bufferSource.buffer = audioBuffer;
+        bufferSource.connect(audioContext.destination);
+        bufferSource.start();
+    } catch (err) {
+        console.error("오디오 재생 중 오류 발생:", err);
+    }
+}
+
+
+async function playAudioBytes(audioBytes, playbackRate = 0.5) {
+    try {
+        if (!audioContext || audioContext.state === 'closed') {
+            audioContext = new AudioContext();
+        }
+
+        // Float32Array로 변환된 PCM 데이터 사용
+        const float32Array = new Float32Array(audioBytes);
+
+        // AudioBuffer 생성
+        const audioBuffer = audioContext.createBuffer(1, float32Array.length, audioContext.sampleRate);
+        audioBuffer.copyToChannel(float32Array, 0);
+
+        // 재생
+        const bufferSource = audioContext.createBufferSource();
+        bufferSource.buffer = audioBuffer;
+        bufferSource.playbackRate.value = playbackRate; // 재생 속도 설정
         bufferSource.connect(audioContext.destination);
         bufferSource.start();
     } catch (err) {

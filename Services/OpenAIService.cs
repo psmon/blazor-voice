@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 
 using OpenAI.Chat;
 using OpenAI.Audio;
+using NAudio.Wave;
 
 namespace BlazorVoice.Services
 {
@@ -42,12 +43,7 @@ namespace BlazorVoice.Services
             return completion.Content[0].Text;
         }
 
-        /// <summary>
-        /// 텍스트를 음성으로 변환하여 byte 스트림으로 반환합니다.
-        /// </summary>
-        /// <param name="text">변환할 텍스트</param>
-        /// <returns>음성 데이터의 byte 배열</returns>
-        public async Task<byte[]> ConvertTextToVoiceAsync(string text)
+        public async Task<float[]> ConvertTextToVoiceAsync(string text)
         {
             var requestBody = new
             {
@@ -64,7 +60,30 @@ namespace BlazorVoice.Services
             }
 
             // MP3 데이터를 byte 배열로 변환하여 반환
-            return await response.Content.ReadAsByteArrayAsync();
+            var audioBytes = await response.Content.ReadAsByteArrayAsync();
+
+            // sample.mp3 파일로 저장
+            var directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "tmp", "audio");
+            Directory.CreateDirectory(directoryPath); // 디렉터리가 없으면 생성
+            var filePath = Path.Combine(directoryPath, "sample.mp3");
+            await File.WriteAllBytesAsync(filePath, audioBytes);
+
+            // MP3 데이터를 PCM 데이터로 변환
+            return ConvertMp3ToFloatArray(audioBytes);
+        }
+
+        private float[] ConvertMp3ToFloatArray(byte[] mp3Data)
+        {
+            using var mp3Stream = new MemoryStream(mp3Data);
+            using var mp3Reader = new Mp3FileReader(mp3Stream);
+
+            // PCM 데이터를 float 배열로 변환
+            var sampleProvider = mp3Reader.ToSampleProvider();
+            var totalSamples = (int)(mp3Reader.TotalTime.TotalSeconds * mp3Reader.WaveFormat.SampleRate * mp3Reader.WaveFormat.Channels);
+            var floatBuffer = new float[totalSamples];
+            int samplesRead = sampleProvider.Read(floatBuffer, 0, floatBuffer.Length);
+
+            return floatBuffer.Take(samplesRead).ToArray();
         }
 
     }

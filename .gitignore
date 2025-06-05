@@ -44,3 +44,4 @@ libman.json.cache
 # Ignore publish output
 publish/
 /.vs
+/tmp
