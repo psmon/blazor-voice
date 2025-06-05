@@ -17,7 +17,7 @@ builder.Services.AddSignalR(options =>
 });
 
 // OpenAIService를 DI 컨테이너에 등록
-builder.Services.AddSingleton<OpenAIService>();
+builder.Services.AddScoped<OpenAIService>();
 
 var app = builder.Build();
 

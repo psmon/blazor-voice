@@ -28,7 +28,7 @@ async function playAudioBytes2(audioBytes) {
 }
 
 
-async function playAudioBytes(audioBytes, playbackRate = 0.5) {
+async function playAudioBytes(audioBytes, playbackRate, type, dotNetRef) {
     try {
         if (!audioContext || audioContext.state === 'closed') {
             audioContext = new AudioContext();
@@ -45,7 +45,25 @@ async function playAudioBytes(audioBytes, playbackRate = 0.5) {
         const bufferSource = audioContext.createBufferSource();
         bufferSource.buffer = audioBuffer;
         bufferSource.playbackRate.value = playbackRate; // 재생 속도 설정
-        bufferSource.connect(audioContext.destination);
+        bufferSource.connect(audioContext.destination);                
+
+        // 재생 완료 이벤트 핸들러 추가
+        bufferSource.onended = () => {            
+            // 타입에 따라 추가 작업 수행
+            console.log(`오디오 재생 완료 재생 타입: ${type}`);
+            if (type === 1) {
+                console.log("Type 1: 휴먼 재생완료~ LLM응답요청");
+                if (dotNetRef && typeof dotNetRef.invokeMethodAsync === "function") {
+                    dotNetRef.invokeMethodAsync("OnAudioPlaybackCompleted", 1)
+                        .catch(err => console.error("Blazor 메서드 호출 OnAudioPlaybackCompleted 중 오류 발생:", err));
+                }                
+            } else if (type === 2) {
+                console.log("Type 2: AI재생완료");
+            } else if (type === 3) {
+                console.log("Type 3: 사용자 정의 작업");
+            }
+        };
+
         bufferSource.start();
     } catch (err) {
         console.error("오디오 재생 중 오류 발생:", err);
@@ -67,6 +85,7 @@ function convertUint8ToFloat32(uint8Array) {
 async function startWebRTC(localVideoId, remoteVideoId, dotNetRef) {
     const localVideo = document.getElementById(localVideoId);
     const remoteVideo = document.getElementById(remoteVideoId);
+    dotNetRef = dotNetRef || null; // dotNetRef가 제공되지 않으면 null로 설정
 
     navigator.mediaDevices.getUserMedia({ audio: true, video: true })
         .then(stream => {

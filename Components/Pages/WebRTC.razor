@@ -127,6 +127,22 @@
         }
     }
 
+    [JSInvokable]
+    public async Task OnAudioPlaybackCompleted(int option)
+    {
+        Console.WriteLine("Blazor에서 오디오 재생 완료 이벤트 처리");
+        // 추가 작업 수행 가능
+
+        var msg = OpenAIService.GetLastAiMessage();
+
+        ChatMessages.Add($"[AI 응답] {msg}");
+
+        var recVoice = await OpenAIService.ConvertTextToVoiceAsync(msg); // TTS 처리
+
+        var dotNetRef = DotNetObjectReference.Create(this);
+        await JSRuntime.InvokeVoidAsync("playAudioBytes", recVoice, 0.5f, 2, dotNetRef);
+    }
+
     private async Task UpdateMicrophoneVolume()
     {
         await JSRuntime.InvokeVoidAsync("setMicrophoneVolume", MicrophoneVolume);
@@ -155,11 +171,12 @@
     {
         // EchoTTS 처리 로직
         //await JSRuntime.InvokeVoidAsync("playTextAsSpeech", message);
-        ChatMessages.Add($"[Echo 응답] {message}");
+        ChatMessages.Add($"[Human] {message}");
 
-        var recVoice = await OpenAIService.ConvertTextToVoiceAsync(message); // TTS 처리
+        var dotNetRef = DotNetObjectReference.Create(this);
+        var recVoice = await OpenAIService.ConvertTextToVoiceWithLLMAsync(message); // TTS 처리
 
-        await JSRuntime.InvokeVoidAsync("playAudioBytes", recVoice);
+        await JSRuntime.InvokeVoidAsync("playAudioBytes", recVoice, 0.5f, 1, dotNetRef);
 
     }
 
