@@ -61,7 +61,7 @@ namespace BlazorVoice.Services
             // 수정된 코드: ChatMessage 생성 시 올바른 정적 메서드 사용
             var completionResult = await _client.CompleteChatAsync(new ChatMessage[]
             {
-                ChatMessage.CreateUserMessage($"요청메시지는 : {message} 이며 첨부메시지는 현재 대화내용의 히스토리이며 이 맥락을 유지하면서 답변, 답변은 20자미만으로 줄여서 답변을 항상해"),   // User 메시지 생성
+                ChatMessage.CreateUserMessage($"요청메시지는 : {message} 이며 첨부메시지는 현재 대화내용의 히스토리이며 이 맥락을 유지하면서 답변, 답변은 50자미만으로 줄여서 답변을 항상해~ AI는 너가답변한것이니 언급없이 너인것처럼하면됨"),   // User 메시지 생성
                 ChatMessage.CreateAssistantMessage(string.Join("\n", recentHistory))                                        // Assistant 메시지 생성
             });
 
@@ -130,9 +130,9 @@ namespace BlazorVoice.Services
 
             // TTS API 호출과 GetChatCompletion을 동시에 실행
             var ttsTask = _httpClient.PostAsJsonAsync("audio/speech", requestBody);
-            var chatTask = GetChatCompletion(text);
 
-            await Task.WhenAll(ttsTask, chatTask); // 두 작업이 완료될 때까지 기다림
+            // GetChatCompletion을 백그라운드에서 실행
+            _ = Task.Run(() => GetChatCompletion(text));
 
             var response = await ttsTask;            
 
