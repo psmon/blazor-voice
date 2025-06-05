@@ -55,11 +55,14 @@ namespace BlazorVoice.Services
         {
             _conversationHistory.Add($"User:{message}");
 
+            // 최근 20개의 대화 기록을 가져옵니다.
+            var recentHistory = _conversationHistory.Skip(Math.Max(0, _conversationHistory.Count - 20)).ToList();
+
             // 수정된 코드: ChatMessage 생성 시 올바른 정적 메서드 사용
             var completionResult = await _client.CompleteChatAsync(new ChatMessage[]
             {
                 ChatMessage.CreateUserMessage($"요청메시지는 : {message} 이며 첨부메시지는 현재 대화내용의 히스토리이며 이 맥락을 유지하면서 답변, 답변은 20자미만으로 줄여서 답변을 항상해"),   // User 메시지 생성
-                ChatMessage.CreateAssistantMessage(_conversationHistory.LastOrDefault() ?? string.Empty)                                        // Assistant 메시지 생성
+                ChatMessage.CreateAssistantMessage(string.Join("\n", recentHistory))                                        // Assistant 메시지 생성
             });
 
             string aiResponse = completionResult.Value.Content.FirstOrDefault()?.Text ?? string.Empty;

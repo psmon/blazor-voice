@@ -141,6 +141,8 @@
 
         var dotNetRef = DotNetObjectReference.Create(this);
         await JSRuntime.InvokeVoidAsync("playAudioBytes", recVoice, 0.5f, 2, dotNetRef);
+
+        StateHasChanged(); // UI 업데이트
     }
 
     private async Task UpdateMicrophoneVolume()
@@ -152,7 +154,7 @@
     {
         if (!string.IsNullOrWhiteSpace(ChatInput))
         {
-            ChatMessages.Add($"[{SelectedChatOption}] {ChatInput}");
+            //ChatMessages.Add($"[{SelectedChatOption}] {ChatInput}");
 
             if (SelectedChatOption == "EchoTTS")
             {
@@ -178,6 +180,8 @@
 
         await JSRuntime.InvokeVoidAsync("playAudioBytes", recVoice, 0.5f, 1, dotNetRef);
 
+        StateHasChanged(); // UI 업데이트
+        
     }
 
     private async Task HandleTTSToLLM(string message)
