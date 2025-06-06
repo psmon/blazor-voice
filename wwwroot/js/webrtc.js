@@ -145,4 +145,13 @@ async function setMicrophoneVolume(volume) {
     }
 }
 
+async function getOrCreateUniqueId() {
+    let uniqueId = localStorage.getItem("uniqueUserId");
+    if (!uniqueId) {
+        uniqueId = crypto.randomUUID(); // 유니크한 ID 생성
+        localStorage.setItem("uniqueUserId", uniqueId);
+    }
+    return uniqueId;
+}
+
 console.log("webrtc.js loaded successfully");

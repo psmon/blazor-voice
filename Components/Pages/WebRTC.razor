@@ -1,8 +1,13 @@
 ﻿@page "/web-rtc"
 @rendermode InteractiveServer
 @using System.Text.Json
+@using BlazorVoice.Akka
+@using BlazorVoice.Akka.Actor
+@using global::Akka.Actor
 @inject BlazorVoice.Services.OpenAIService OpenAIService
 @inject IJSRuntime JSRuntime
+@inject AkkaService AkkaService
+@inject IServiceProvider ServiceProvider
 
 <PageTitle>WebRTC</PageTitle>
 
@@ -69,6 +74,31 @@
     private string ChatInput { get; set; } = string.Empty;
     private List<string> ChatMessages { get; set; } = new();
     private string SelectedChatOption { get; set; } = "EchoTTS";
+    private string UserId { get; set; } = string.Empty;
+
+    private IActorRef MyVoiceActor { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // JavaScript를 호출하여 유니크 ID를 가져옴
+        UserId = await JSRuntime.InvokeAsync<string>("getOrCreateUniqueId");
+        Console.WriteLine($"User ID: {UserId}");
+
+        string voiceChatActorKey = $"VoiceChatActor-{UserId}";
+
+        var voiceCahtActor = AkkaService.GetActor(voiceChatActorKey);
+
+        var actorSystem = AkkaService.GetActorSystem();
+
+        if(voiceCahtActor==null)
+        {
+            // VoiceChatActor가 없으면 생성
+            voiceCahtActor = actorSystem.ActorOf(Props.Create(() => 
+                new VoiceChatActor(ServiceProvider)), UserId);
+
+            AkkaService.AddActor(voiceChatActorKey, voiceCahtActor);
+        }
+    }
 
     private async Task StartWebRTC()
     {
