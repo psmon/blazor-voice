@@ -9,17 +9,6 @@
 <h1>WebRTC</h1>
 
 <MudGrid>
-    <MudItem xs="6">
-        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-            <video id="remoteVideo" autoplay style="width: 100%; border-radius: 8px;"></video>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="6">
-        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-            <video id="localVideo" autoplay muted style="width: 50%; border-radius: 8px;"></video>
-        </MudPaper>
-    </MudItem>
-
     <!-- 채팅창 -->
     <MudItem xs="12">
         <MudPaper Class="pa-3">
@@ -39,15 +28,25 @@
                 </MudList>
                 <!-- 채팅 입력 -->
                 <MudTextField @bind-Value="ChatInput" Placeholder="메시지를 입력하세요..." />
-
-
                 <MudButton OnClick="SendChatMessage" Class="mt-2">전송</MudButton>
             </MudStack>
         </MudPaper>
     </MudItem>
 
-    <MudItem xs="12">
+    <!-- Video -->
+    <MudItem xs="6">
+        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+            <video id="remoteVideo" autoplay style="width: 100%; border-radius: 8px;"></video>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="6">
+        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+            <video id="localVideo" autoplay muted style="width: 50%; border-radius: 8px;"></video>
+        </MudPaper>
+    </MudItem>
 
+    <!-- Audio -->
+    <MudItem xs="12">
         <MudStack>
             <MudPaper Class="pa-3">
                 <MudText Typo="Typo.subtitle1" Class="mt-4">오디오바</MudText>
@@ -60,10 +59,6 @@
         </MudStack>
 
     </MudItem>
-
-
-
-
 </MudGrid>
 
 
