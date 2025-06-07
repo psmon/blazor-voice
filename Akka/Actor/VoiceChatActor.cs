@@ -1,4 +1,6 @@
-﻿using Akka.Actor;
+﻿using System;
+
+using Akka.Actor;
 using Akka.Event;
 
 namespace BlazorVoice.Akka.Actor
@@ -14,6 +16,8 @@ namespace BlazorVoice.Akka.Actor
         private readonly ILoggingAdapter logger = Context.GetLogger();
 
         private readonly IServiceProvider _serviceProvider;
+
+        private Action<string, object[]> _blazorCallback;
 
         private sealed class TimerKey
         {
@@ -36,9 +40,18 @@ namespace BlazorVoice.Akka.Actor
                 initialDelay: TimeSpan.FromSeconds(10),
                 interval: TimeSpan.FromSeconds(RefreshTimeSecForContentAutoUpdate));
 
-            Receive<ContentAutoUpdateCommand>(async command =>
+            Receive<ContentAutoUpdateCommand>( command =>
             {
                 logger.Info("VoiceChatActor : ContentAutoUpdateCommand");
+                _blazorCallback?.Invoke("AddMessage", new object[] { "AI", "ContentAutoUpdate" });
+                
+            });
+
+
+            Receive<Action<string, object[]>>( command =>
+            {
+                _blazorCallback = command;
+                _blazorCallback?.Invoke("AddMessage", new object[] { "AI", "WellCome" });
             });
 
             _serviceProvider = serviceProvider;
