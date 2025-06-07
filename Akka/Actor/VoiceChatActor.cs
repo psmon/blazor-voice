@@ -5,6 +5,8 @@ using Akka.Event;
 
 using BlazorVoice.Services;
 
+using OpenAI.Chat;
+
 namespace BlazorVoice.Akka.Actor
 {
     public class VoiceChatActorCommand { }
@@ -27,9 +29,15 @@ namespace BlazorVoice.Akka.Actor
 
         private readonly IServiceProvider _serviceProvider;
 
+        private List<String> _conversationHistory = new();
+
+        private string lastAiMessage = string.Empty;
+
         private Action<string, object[]> _blazorCallback;
 
         private OpenAIService _openAIService;
+
+        private int MaxAIWordCount = 100; // AI 응답 최대 단어 수 설정
 
         private sealed class TimerKey
         {
@@ -66,17 +74,19 @@ namespace BlazorVoice.Akka.Actor
                 {
                     case "Your":
                     {
-                        int playType = 1; //1: Human
-                        var recVoice = _openAIService.ConvertTextToVoiceWithLLMAsync(command.Text, command.Voice).Result;
+                        int playType = 1;
+                        var recVoice = _openAIService.ConvertTextToVoiceAsync(command.Text, command.Voice).Result;
+                        _ = Task.Run(() => GetChatCompletion(command.Text));
+
                         _blazorCallback?.Invoke("AddMessage", new object[] { command.From, command.Text });
                         _blazorCallback?.Invoke("PlayAudioBytes", new object[] { recVoice, 0.5f, playType });
                     }                        
                     break;
                     case "AI":
                     {
-                        var msg = _openAIService.GetLastAiMessage();
-                        int playType = 2; //2: AI
-                        var recVoice = _openAIService.ConvertTextToVoiceAsync(msg, "alloy").Result;
+                        var msg = lastAiMessage;
+                        int playType = 2;
+                        var recVoice = _openAIService.ConvertTextToVoiceAsync(msg, command.Voice).Result;
                         _blazorCallback?.Invoke("AddMessage", new object[] { command.From, msg });
                         _blazorCallback?.Invoke("PlayAudioBytes", new object[] { recVoice, 0.5f, playType });
                     }
@@ -101,6 +111,31 @@ namespace BlazorVoice.Akka.Actor
 
             _serviceProvider = serviceProvider;
 
+        }
+
+        /// <summary>
+        /// 주어진 메시지에 대한 ChatCompletion을 생성합니다.
+        /// </summary>
+        /// <param name="message">보낼 메시지</param>
+        /// <returns>ChatCompletion 결과</returns>
+        public async Task<string> GetChatCompletion(string message)
+        {
+            _conversationHistory.Add($"User:{message}");
+
+            // 최근 20개의 대화 기록을 가져옵니다.
+            var recentHistory = _conversationHistory.Skip(Math.Max(0, _conversationHistory.Count - 20)).ToList();
+
+            // 수정된 코드: ChatMessage 생성 시 올바른 정적 메서드 사용
+            var aiResponse = await _openAIService.GetChatCompletion(
+
+                $"요청메시지는 : {message} 이며 첨부메시지는 현재 대화내용의 히스토리이며 이 맥락을 유지하면서 답변, 답변은 {MaxAIWordCount}자미만으로 줄여서 답변을 항상해~ AI는 너가답변한것이니 언급없이 너인것처럼하면됨",
+                recentHistory
+            );            
+
+            _conversationHistory.Add($"AI:{aiResponse}");
+            lastAiMessage = aiResponse;
+
+            return aiResponse;
         }
     }
 }
