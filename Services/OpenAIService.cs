@@ -144,11 +144,12 @@ namespace BlazorVoice.Services
             // MP3 데이터를 byte 배열로 변환하여 반환
             var audioBytes = await response.Content.ReadAsByteArrayAsync();
 
-            // sample.mp3 파일로 저장
-            var directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "tmp", "audio");
-            Directory.CreateDirectory(directoryPath); // 디렉터리가 없으면 생성
-            var filePath = Path.Combine(directoryPath, "sample.mp3");
-            await File.WriteAllBytesAsync(filePath, audioBytes);
+            // sample.mp3 파일로 저장 for debugging purposes
+            // var directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "tmp", "audio");
+            // /Directory.CreateDirectory(directoryPath); // 디렉터리가 없으면 생성
+            // /var filePath = Path.Combine(directoryPath, "sample.mp3");
+            // /await File.WriteAllBytesAsync(filePath, audioBytes);
+
 
             // MP3 데이터를 PCM 데이터로 변환
             return ConvertMp3ToFloatArray(audioBytes);

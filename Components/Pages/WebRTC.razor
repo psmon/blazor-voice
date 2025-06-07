@@ -99,8 +99,10 @@
             AkkaService.AddActor(voiceChatActorKey, voiceCahtActor);
         }
 
-
+        // UX를 제어권인 대리자 생성해 전달        
         voiceCahtActor.Tell(CreateDynamicDelegate());
+
+        MyVoiceActor = voiceCahtActor;
 
     }
 
@@ -156,22 +158,6 @@
         }
     }
 
-    [JSInvokable]
-    public async Task OnAudioPlaybackCompleted(int option)
-    {
-        Console.WriteLine("Blazor에서 오디오 재생 완료 이벤트 처리");
-        // 추가 작업 수행 가능
-
-        var msg = OpenAIService.GetLastAiMessage();        
-        AddMessage("AI", msg);
-
-        var recVoice = await OpenAIService.ConvertTextToVoiceAsync(msg); // TTS 처리
-
-        var dotNetRef = DotNetObjectReference.Create(this);
-        await JSRuntime.InvokeVoidAsync("playAudioBytes", recVoice, 0.5f, 2, dotNetRef);
-
-        StateHasChanged(); // UI 업데이트
-    }
 
     private async Task UpdateMicrophoneVolume()
     {
@@ -182,42 +168,44 @@
     {
         if (!string.IsNullOrWhiteSpace(ChatInput))
         {
-            //ChatMessages.Add($"[{SelectedChatOption}] {ChatInput}");
-
-            if (SelectedChatOption == "EchoTTS")
-            {
-                await HandleEchoTTS(ChatInput);
-            }
-            else if (SelectedChatOption == "TTS to LLM")
-            {
-                await HandleTTSToLLM(ChatInput);
-            }
+            await HandleTTS(ChatInput);
 
             ChatInput = string.Empty;
         }
     }
 
-    private async Task HandleEchoTTS(string message)
+    private async Task HandleTTS(string message)
     {
-        // EchoTTS 처리 로직
-        //await JSRuntime.InvokeVoidAsync("playTextAsSpeech", message);        
-        AddMessage("Human", message);
-
-        var dotNetRef = DotNetObjectReference.Create(this);
-        var recVoice = await OpenAIService.ConvertTextToVoiceWithLLMAsync(message); // TTS 처리
-
-        await JSRuntime.InvokeVoidAsync("playAudioBytes", recVoice, 0.5f, 1, dotNetRef);
+        MyVoiceActor.Tell(new TTSCommand()
+        {
+            From = "Your",
+            Text = message,
+            Voice = "coral"
+        });
 
         StateHasChanged(); // UI 업데이트
-
     }
 
-    private async Task HandleTTSToLLM(string message)
+    [JSInvokable]
+    public async Task OnAudioPlaybackCompleted(int option)
     {
-        // TTS to LLM 처리 로직
-        //var response = await OpenAIService.GetResponseFromLLM(message);
-        AddMessage("AI", message);
+        MyVoiceActor.Tell(new TTSCommand()
+        {
+            From = "AI",
+            Text = "LLM자동재생",
+            Voice = "alloy"
+        });
     }
+
+    private void PlayAudioBytes(float[] voice, float speed, int playtype)
+    {
+        InvokeAsync(() =>
+        {
+            var dotNetRef = DotNetObjectReference.Create(this);
+            JSRuntime.InvokeVoidAsync("playAudioBytes", voice, speed, playtype, dotNetRef);
+        });
+    }
+
 
     private void AddMessage(string from, string message)
     {
