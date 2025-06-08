@@ -15,14 +15,16 @@
         "launchBrowser": true,
         "applicationUrl": "http://localhost:5210",
         "environmentVariables": {
-          "ASPNETCORE_ENVIRONMENT": "Development"
+          "ASPNETCORE_ENVIRONMENT": "Development",
+          "OPENAI_API_KEY": "Your OPENAI KEY"
         }
       },
       "IIS Express": {
         "commandName": "IISExpress",
         "launchBrowser": true,
         "environmentVariables": {
-          "ASPNETCORE_ENVIRONMENT": "Development"
+          "ASPNETCORE_ENVIRONMENT": "Development",
+          "OPENAI_API_KEY": "Your OPENAI KEY"
         }
       }
     }
