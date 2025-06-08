@@ -75,9 +75,8 @@ namespace BlazorVoice.Akka.Actor
                     case "Your":
                     {
                         int playType = 1;
-                        var recVoice = _openAIService.ConvertTextToVoiceAsync(command.Text, command.Voice).Result;
                         _ = Task.Run(() => GetChatCompletion(command.Text));
-
+                        var recVoice = _openAIService.ConvertTextToVoiceAsync(command.Text, command.Voice).Result;
                         _blazorCallback?.Invoke("AddMessage", new object[] { command.From, command.Text });
                         _blazorCallback?.Invoke("PlayAudioBytes", new object[] { recVoice, 0.5f, playType });
                     }                        
