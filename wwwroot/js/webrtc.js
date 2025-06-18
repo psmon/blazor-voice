@@ -178,7 +178,6 @@ function stopAIFaceAnimation() {
 }
 
 function clearAIFaceCanvas() {
-    // 말 안할 때(정지 얼굴) 그리기 + 눈동자만 약간 움직임
     const canvas = document.getElementById('aiFaceCanvas');
     if (canvas) {
         const ctx = canvas.getContext('2d');
@@ -188,43 +187,91 @@ function clearAIFaceCanvas() {
 }
 
 function drawAIFaceStatic(ctx, canvas) {
-    // 얼굴 중심 좌표 및 크기
     const w = canvas.width;
     const h = canvas.height;
     const cx = w / 2;
     const cy = h / 2 + 20;
     const faceRadius = 70;
 
+    // 머리카락 (윗부분)
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 60, faceRadius * 0.9, 30, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#a3c9f7';
+    ctx.globalAlpha = 0.7;
+    ctx.fill();
+    ctx.restore();
+
     // 얼굴 원
     ctx.save();
-    ctx.globalAlpha = 0.7;
+    ctx.globalAlpha = 0.85;
     ctx.beginPath();
     ctx.arc(cx, cy, faceRadius, 0, Math.PI * 2);
     ctx.fillStyle = '#fffbe7';
+    ctx.shadowColor = '#e0e0e0';
+    ctx.shadowBlur = 10;
     ctx.fill();
+    ctx.restore();
+
+    // 볼터치
+    ctx.save();
+    ctx.globalAlpha = 0.25;
+    ctx.beginPath();
+    ctx.ellipse(cx - 32, cy + 10, 14, 7, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 32, cy + 10, 14, 7, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffb6b6';
+    ctx.fill();
+    ctx.restore();
+
+    // 눈썹
+    ctx.save();
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx - 25, cy - 32, 13, Math.PI * 1.1, Math.PI * 1.9, false);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx + 25, cy - 32, 13, Math.PI * 1.1, Math.PI * 1.9, false);
+    ctx.stroke();
     ctx.restore();
 
     // 눈
     ctx.beginPath();
-    ctx.arc(cx - 25, cy - 20, 10, 0, Math.PI * 2);
-    ctx.arc(cx + 25, cy - 20, 10, 0, Math.PI * 2);
+    ctx.arc(cx - 25, cy - 20, 11, 0, Math.PI * 2);
+    ctx.arc(cx + 25, cy - 20, 11, 0, Math.PI * 2);
     ctx.fillStyle = '#222';
     ctx.fill();
 
     // 눈동자(살짝 움직임)
     const t = Date.now() / 500;
-    const eyeOffsetX = Math.sin(t) * 2; // 작게 움직임
+    const eyeOffsetX = Math.sin(t) * 2;
     ctx.beginPath();
-    ctx.arc(cx - 25 + eyeOffsetX, cy - 20, 4, 0, Math.PI * 2);
-    ctx.arc(cx + 25 + eyeOffsetX, cy - 20, 4, 0, Math.PI * 2);
+    ctx.arc(cx - 25 + eyeOffsetX, cy - 20, 5, 0, Math.PI * 2);
+    ctx.arc(cx + 25 + eyeOffsetX, cy - 20, 5, 0, Math.PI * 2);
     ctx.fillStyle = '#fff';
     ctx.fill();
 
-    // 입 (닫힌 상태)
+    // 눈 하이라이트
+    ctx.save();
+    ctx.globalAlpha = 0.7;
     ctx.beginPath();
-    ctx.ellipse(cx, cy + 30, 22, 8, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#e57373';
+    ctx.arc(cx - 28 + eyeOffsetX, cy - 23, 2, 0, Math.PI * 2);
+    ctx.arc(cx + 22 + eyeOffsetX, cy - 23, 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#a3c9f7';
     ctx.fill();
+    ctx.restore();
+
+    // 입 (닫힌 상태, 살짝 미소)
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx - 15, cy + 32);
+    ctx.quadraticCurveTo(cx, cy + 40, cx + 15, cy + 32);
+    ctx.quadraticCurveTo(cx, cy + 38, cx - 15, cy + 32);
+    ctx.closePath();
+    ctx.fillStyle = '#e57373';
+    ctx.globalAlpha = 0.85;
+    ctx.fill();
+    ctx.restore();
 
     // 눈동자만 반복 애니
     if (!aiFaceAnimationActive) {
@@ -238,26 +285,58 @@ function drawAIFace() {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 얼굴 중심 좌표 및 크기
     const w = canvas.width;
     const h = canvas.height;
     const cx = w / 2;
     const cy = h / 2 + 20;
     const faceRadius = 70;
 
+    // 머리카락 (윗부분)
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 60, faceRadius * 0.9, 30, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#a3c9f7';
+    ctx.globalAlpha = 0.7;
+    ctx.fill();
+    ctx.restore();
+
     // 얼굴 원
     ctx.save();
-    ctx.globalAlpha = 0.7;
+    ctx.globalAlpha = 0.85;
     ctx.beginPath();
     ctx.arc(cx, cy, faceRadius, 0, Math.PI * 2);
     ctx.fillStyle = '#fffbe7';
+    ctx.shadowColor = '#e0e0e0';
+    ctx.shadowBlur = 10;
     ctx.fill();
+    ctx.restore();
+
+    // 볼터치
+    ctx.save();
+    ctx.globalAlpha = 0.25;
+    ctx.beginPath();
+    ctx.ellipse(cx - 32, cy + 10, 14, 7, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 32, cy + 10, 14, 7, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffb6b6';
+    ctx.fill();
+    ctx.restore();
+
+    // 눈썹
+    ctx.save();
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx - 25, cy - 32, 13, Math.PI * 1.1, Math.PI * 1.9, false);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx + 25, cy - 32, 13, Math.PI * 1.1, Math.PI * 1.9, false);
+    ctx.stroke();
     ctx.restore();
 
     // 눈
     ctx.beginPath();
-    ctx.arc(cx - 25, cy - 20, 10, 0, Math.PI * 2);
-    ctx.arc(cx + 25, cy - 20, 10, 0, Math.PI * 2);
+    ctx.arc(cx - 25, cy - 20, 11, 0, Math.PI * 2);
+    ctx.arc(cx + 25, cy - 20, 11, 0, Math.PI * 2);
     ctx.fillStyle = '#222';
     ctx.fill();
 
@@ -265,17 +344,33 @@ function drawAIFace() {
     const t = Date.now() / 300;
     const eyeOffsetX = Math.sin(t) * 3;
     ctx.beginPath();
-    ctx.arc(cx - 25 + eyeOffsetX, cy - 20, 4, 0, Math.PI * 2);
-    ctx.arc(cx + 25 + eyeOffsetX, cy - 20, 4, 0, Math.PI * 2);
+    ctx.arc(cx - 25 + eyeOffsetX, cy - 20, 5, 0, Math.PI * 2);
+    ctx.arc(cx + 25 + eyeOffsetX, cy - 20, 5, 0, Math.PI * 2);
     ctx.fillStyle = '#fff';
     ctx.fill();
 
-    // 입 (말하는 애니)
-    const mouthOpen = aiFaceAnimationActive ? (Math.abs(Math.sin(t * 2)) * 18 + 8) : 8;
+    // 눈 하이라이트
+    ctx.save();
+    ctx.globalAlpha = 0.7;
     ctx.beginPath();
-    ctx.ellipse(cx, cy + 30, 22, mouthOpen, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#e57373';
+    ctx.arc(cx - 28 + eyeOffsetX, cy - 23, 2, 0, Math.PI * 2);
+    ctx.arc(cx + 22 + eyeOffsetX, cy - 23, 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#a3c9f7';
     ctx.fill();
+    ctx.restore();
+
+    // 입 (말하는 애니, 자연스러운 입모양)
+    const mouthOpen = aiFaceAnimationActive ? (Math.abs(Math.sin(t * 2)) * 18 + 8) : 8;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx - 15, cy + 32);
+    ctx.quadraticCurveTo(cx, cy + 32 + mouthOpen, cx + 15, cy + 32);
+    ctx.quadraticCurveTo(cx, cy + 38, cx - 15, cy + 32);
+    ctx.closePath();
+    ctx.fillStyle = '#e57373';
+    ctx.globalAlpha = 0.85;
+    ctx.fill();
+    ctx.restore();
 
     // 다음 프레임
     if (aiFaceAnimationActive) {

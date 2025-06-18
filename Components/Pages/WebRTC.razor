@@ -9,11 +9,26 @@
 @inject AkkaService AkkaService
 @inject IServiceProvider ServiceProvider
 
-<PageTitle>WebRTC</PageTitle>
+<PageTitle>AIVoiceChat</PageTitle>
 
-<h1>WebRTC</h1>
+<h1>AIVoiceChat</h1>
 
 <MudGrid>
+
+    <!-- Player -->
+    <MudItem xs="6">
+        <!-- AI Ani -->
+        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+            <canvas id="aiFaceCanvas" width="320" height="240" style="position: left: 0; top: 0; width: 50%; height: 50%; pointer-events: none;"></canvas>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="6">
+        <!-- Video -->
+        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+            <video id="localVideo" autoplay muted style="width: 50%; border-radius: 8px;"></video>
+        </MudPaper>
+    </MudItem>
+
     <!-- 채팅창 -->
     <MudItem xs="12">
         <MudPaper Class="pa-3">
@@ -32,25 +47,14 @@
                     }
                 </MudList>
                 <!-- 채팅 입력 -->
-                <MudTextField @bind-Value="ChatInput" Placeholder="메시지를 입력하세요..." />
+                <MudTextField @bind-Value="ChatInput" Placeholder="메시지를 입력하세요..."
+                               />
+
                 <MudButton OnClick="SendChatMessage" Class="mt-2">전송</MudButton>
             </MudStack>
         </MudPaper>
     </MudItem>
 
-    <!-- Player -->
-    <MudItem xs="6">
-        <!-- AI Ani -->
-        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-            <canvas id="aiFaceCanvas" width="320" height="240" style="position: left: 0; top: 0; width: 50%; height: 50%; pointer-events: none;"></canvas>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="6">
-        <!-- Video -->
-        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-            <video id="localVideo" autoplay muted style="width: 50%; border-radius: 8px;"></video>
-        </MudPaper>
-    </MudItem>
 
     <!-- Audio -->
     <MudItem xs="12">
@@ -166,13 +170,22 @@
         await JSRuntime.InvokeVoidAsync("setMicrophoneVolume", MicrophoneVolume);
     }
 
+    private async Task HandleChatInputKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SendChatMessage();
+        }
+    }
+
     private async Task SendChatMessage()
     {
         if (!string.IsNullOrWhiteSpace(ChatInput))
         {
             await HandleTTS(ChatInput);
 
-            ChatInput = string.Empty;
+            ChatInput = string.Empty;            
+
         }
     }
 
@@ -183,7 +196,7 @@
             From = "Your",
             Text = message,
             Voice = "coral"
-        });
+        });        
 
         StateHasChanged(); // UI 업데이트
     }
