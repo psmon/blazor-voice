@@ -38,13 +38,15 @@
         </MudPaper>
     </MudItem>
 
-    <!-- Video -->
+    <!-- Player -->
     <MudItem xs="6">
+        <!-- AI Ani -->
         <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-            <video id="remoteVideo" autoplay style="width: 100%; border-radius: 8px;"></video>
+            <canvas id="aiFaceCanvas" width="320" height="240" style="position: left: 0; top: 0; width: 50%; height: 50%; pointer-events: none;"></canvas>
         </MudPaper>
     </MudItem>
     <MudItem xs="6">
+        <!-- Video -->
         <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
             <video id="localVideo" autoplay muted style="width: 50%; border-radius: 8px;"></video>
         </MudPaper>

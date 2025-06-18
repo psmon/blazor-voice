@@ -3,6 +3,10 @@ let analyser;
 let dataArray;
 let gainNode;
 
+// === AI 얼굴 애니메이션 ===
+let aiFaceAnimationActive = false;
+let aiFaceAnimationFrame = null;
+
 async function playAudioBytes2(audioBytes) {
     try {
         // 오디오 컨텍스트 초기화 (전역에서 관리하거나 외부에서 주입 가능)
@@ -41,6 +45,10 @@ async function playAudioBytes(audioBytes, playbackRate, type, dotNetRef) {
         const audioBuffer = audioContext.createBuffer(1, float32Array.length, audioContext.sampleRate);
         audioBuffer.copyToChannel(float32Array, 0);
 
+        if (type === 2) {
+            startAIFaceAnimation();
+        }
+
         // 재생
         const bufferSource = audioContext.createBufferSource();
         bufferSource.buffer = audioBuffer;
@@ -59,6 +67,7 @@ async function playAudioBytes(audioBytes, playbackRate, type, dotNetRef) {
                 }                
             } else if (type === 2) {
                 console.log("Type 2: AI재생완료");
+                stopAIFaceAnimation();
             } else if (type === 3) {
                 console.log("Type 3: 사용자 정의 작업");
             }
@@ -152,6 +161,126 @@ async function getOrCreateUniqueId() {
         localStorage.setItem("uniqueUserId", uniqueId);
     }
     return uniqueId;
+}
+
+function startAIFaceAnimation() {
+    aiFaceAnimationActive = true;
+    drawAIFace();
+}
+
+function stopAIFaceAnimation() {
+    aiFaceAnimationActive = false;
+    if (aiFaceAnimationFrame) {
+        cancelAnimationFrame(aiFaceAnimationFrame);
+        aiFaceAnimationFrame = null;
+    }
+    clearAIFaceCanvas();
+}
+
+function clearAIFaceCanvas() {
+    // 말 안할 때(정지 얼굴) 그리기 + 눈동자만 약간 움직임
+    const canvas = document.getElementById('aiFaceCanvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawAIFaceStatic(ctx, canvas);
+    }
+}
+
+function drawAIFaceStatic(ctx, canvas) {
+    // 얼굴 중심 좌표 및 크기
+    const w = canvas.width;
+    const h = canvas.height;
+    const cx = w / 2;
+    const cy = h / 2 + 20;
+    const faceRadius = 70;
+
+    // 얼굴 원
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.arc(cx, cy, faceRadius, 0, Math.PI * 2);
+    ctx.fillStyle = '#fffbe7';
+    ctx.fill();
+    ctx.restore();
+
+    // 눈
+    ctx.beginPath();
+    ctx.arc(cx - 25, cy - 20, 10, 0, Math.PI * 2);
+    ctx.arc(cx + 25, cy - 20, 10, 0, Math.PI * 2);
+    ctx.fillStyle = '#222';
+    ctx.fill();
+
+    // 눈동자(살짝 움직임)
+    const t = Date.now() / 500;
+    const eyeOffsetX = Math.sin(t) * 2; // 작게 움직임
+    ctx.beginPath();
+    ctx.arc(cx - 25 + eyeOffsetX, cy - 20, 4, 0, Math.PI * 2);
+    ctx.arc(cx + 25 + eyeOffsetX, cy - 20, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+
+    // 입 (닫힌 상태)
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 30, 22, 8, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#e57373';
+    ctx.fill();
+
+    // 눈동자만 반복 애니
+    if (!aiFaceAnimationActive) {
+        requestAnimationFrame(() => drawAIFaceStatic(ctx, canvas));
+    }
+}
+
+function drawAIFace() {
+    const canvas = document.getElementById('aiFaceCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 얼굴 중심 좌표 및 크기
+    const w = canvas.width;
+    const h = canvas.height;
+    const cx = w / 2;
+    const cy = h / 2 + 20;
+    const faceRadius = 70;
+
+    // 얼굴 원
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.arc(cx, cy, faceRadius, 0, Math.PI * 2);
+    ctx.fillStyle = '#fffbe7';
+    ctx.fill();
+    ctx.restore();
+
+    // 눈
+    ctx.beginPath();
+    ctx.arc(cx - 25, cy - 20, 10, 0, Math.PI * 2);
+    ctx.arc(cx + 25, cy - 20, 10, 0, Math.PI * 2);
+    ctx.fillStyle = '#222';
+    ctx.fill();
+
+    // 눈동자(간단한 애니)
+    const t = Date.now() / 300;
+    const eyeOffsetX = Math.sin(t) * 3;
+    ctx.beginPath();
+    ctx.arc(cx - 25 + eyeOffsetX, cy - 20, 4, 0, Math.PI * 2);
+    ctx.arc(cx + 25 + eyeOffsetX, cy - 20, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+
+    // 입 (말하는 애니)
+    const mouthOpen = aiFaceAnimationActive ? (Math.abs(Math.sin(t * 2)) * 18 + 8) : 8;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 30, 22, mouthOpen, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#e57373';
+    ctx.fill();
+
+    // 다음 프레임
+    if (aiFaceAnimationActive) {
+        aiFaceAnimationFrame = requestAnimationFrame(drawAIFace);
+    }
 }
 
 console.log("webrtc.js loaded successfully");
