@@ -18,4 +18,8 @@
 	<PackageReference Include="Akka.Logger.NLog" Version="1.5.13" />	  
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\img\" />
+  </ItemGroup>
+
 </Project>

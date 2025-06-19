@@ -13,64 +13,111 @@
 
 <h1>AIVoiceChat</h1>
 
-<MudGrid>
 
-    <!-- Player -->
-    <MudItem xs="6">
-        <!-- AI Ani -->
-        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-            <canvas id="aiFaceCanvas" width="320" height="240" style="position: left: 0; top: 0; width: 50%; height: 50%; pointer-events: none;"></canvas>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="6">
-        <!-- Video -->
-        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-            <video id="localVideo" autoplay muted style="width: 50%; border-radius: 8px;"></video>
-        </MudPaper>
-    </MudItem>
+<style>
+    .webrtc-root {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        min-height: 0;
+    }
 
-    <!-- 채팅창 -->
-    <MudItem xs="12">
-        <MudPaper Class="pa-3">
-            <MudButton OnClick="StartWebRTC" Class="mt-4">
-                Start WebRTC
-            </MudButton>
-        </MudPaper>
-        <MudPaper Class="pa-3">
-            <MudText Typo="Typo.subtitle1">채팅</MudText>
-            <MudStack>
-                <!-- 채팅 리스트 -->
+    .webrtc-main {
+        flex: 1 1 0;
+        display: flex;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .webrtc-player {
+        width: 420px;
+        min-width: 320px;
+        max-width: 480px;
+        background: #f8f8f8;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 16px 0;
+        border-right: 1px solid #eee;
+    }
+
+    .webrtc-chat {
+        flex: 1 1 0;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        height: 100%;
+    }
+
+    .webrtc-chat-list {
+        flex: 1 1 0;
+        overflow-y: auto;
+        min-height: 0;
+        padding: 16px;
+        background: #fff;
+    }
+
+    .webrtc-chat-input {
+        padding: 16px;
+        background: #fafafa;
+        border-top: 1px solid #eee;
+    }
+
+    .webrtc-audio-bar {
+        width: 100%;
+        background: #f5f5f5;
+        border-top: 1px solid #ddd;
+        padding: 12px 24px;
+    }
+</style>
+
+<div class="webrtc-root">
+    <div class="webrtc-main">
+        <!-- Player 영역 (왼쪽 고정) -->
+        <div class="webrtc-player">
+            <MudPaper Class="d-flex align-center justify-center mud-width-full mb-4" Style="background:transparent;">
+                <canvas id="aiFaceCanvas" width="320" height="240" style="pointer-events: none;"></canvas>
+            </MudPaper>            
+            <MudPaper Class="d-flex align-center justify-center mud-width-full" Style="background:transparent;">
+                <video id="localVideo" autoplay muted style="width: 50%; border-radius: 8px;"></video>
+            </MudPaper>
+        </div>
+
+        <!-- 채팅창 (오른쪽, 스크롤) -->
+        <div class="webrtc-chat">
+            <div class="webrtc-chat-list">
+                <MudText Typo="Typo.subtitle1">채팅</MudText>
                 <MudList T="string">
                     @foreach (var chat in ChatMessages)
                     {
                         <MudListItem Text="@chat" Icon="@Icons.Material.Filled.Chat" />
                     }
                 </MudList>
-                <!-- 채팅 입력 -->
-                <MudTextField @bind-Value="ChatInput" Placeholder="메시지를 입력하세요..."
-                               />
+            </div>
+            <div class="webrtc-chat-input">
+                <MudStack Row="true" Spacing="2">
+                    <MudTextField @bind-Value="ChatInput" Placeholder="메시지를 입력하세요..." Style="flex:1"
+                                  OnKeyUp="HandleChatInputKeyUp" />
+                    <MudButton OnClick="SendChatMessage" >전송</MudButton>
+                </MudStack>
+            </div>
+        </div>
+    </div>
 
-                <MudButton OnClick="SendChatMessage" Class="mt-2">전송</MudButton>
-            </MudStack>
-        </MudPaper>
-    </MudItem>
-
-
-    <!-- Audio -->
-    <MudItem xs="12">
+    <!-- Audio 컨트롤 (항상 하단) -->
+    <div class="webrtc-audio-bar">
         <MudStack>
-            <MudPaper Class="pa-3">
-                <MudText Typo="Typo.subtitle1" Class="mt-4">오디오바</MudText>
-                <MudProgressLinear Value="@AudioLevel" Class="mt-2" />
-            </MudPaper>
-            <MudPaper Class="pa-3">
-                <MudText Typo="Typo.subtitle1" Class="mt-4">마이크 볼륨 조절</MudText>
-                <MudSlider @bind-Value="MicrophoneVolume" Min="0" Max="100" Step="1" Class="mt-2" />
-            </MudPaper>
+            <MudButton OnClick="StartWebRTC" Class="mt-4 mud-width-full">
+                Start WebRTC
+            </MudButton>
+            <MudText Typo="Typo.subtitle1">오디오바</MudText>
+            <MudProgressLinear Value="@AudioLevel" Class="mt-2" />
+            <MudText Typo="Typo.subtitle1" Class="mt-4">마이크 볼륨 조절</MudText>
+            <MudSlider @bind-Value="MicrophoneVolume" Min="0" Max="100" Step="1" Class="mt-2" />
         </MudStack>
-
-    </MudItem>
-</MudGrid>
+    </div>
+</div>
 
 
 @code {
@@ -84,31 +131,47 @@
 
     private IActorRef MyVoiceActor { get; set; } = null!;
 
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {        
+        if (firstRender)
+        {
+            // Live2D 모델 초기화 (모델 경로는 실제 파일 위치에 맞게 수정)
+            await JSRuntime.InvokeVoidAsync(
+                "initLive2D"
+            );
+
+            // JavaScript를 호출하여 유니크 ID를 가져옴
+            UserId = await JSRuntime.InvokeAsync<string>("getOrCreateUniqueId");
+            Console.WriteLine($"User ID: {UserId}");
+
+            string voiceChatActorKey = $"VoiceChatActor-{UserId}";
+
+            var actorSystem = AkkaService.GetActorSystem();
+
+            var voiceCahtActor = AkkaService.GetActor(voiceChatActorKey);
+
+            if (voiceCahtActor == null)
+            {
+                // VoiceChatActor가 없으면 생성 - 비식별 세션별단위로 생성
+                voiceCahtActor = actorSystem.ActorOf(Props.Create(() =>
+                    new VoiceChatActor(ServiceProvider)), UserId);
+
+                AkkaService.AddActor(voiceChatActorKey, voiceCahtActor);
+            }
+
+            // UX를 제어권인 대리자 생성해 전달
+            voiceCahtActor.Tell(CreateDynamicDelegate());
+
+            MyVoiceActor = voiceCahtActor;
+
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
-        // JavaScript를 호출하여 유니크 ID를 가져옴
-        UserId = await JSRuntime.InvokeAsync<string>("getOrCreateUniqueId");
-        Console.WriteLine($"User ID: {UserId}");
 
-        string voiceChatActorKey = $"VoiceChatActor-{UserId}";
-
-        var actorSystem = AkkaService.GetActorSystem();
-
-        var voiceCahtActor = AkkaService.GetActor(voiceChatActorKey);        
-
-        if(voiceCahtActor==null)
-        {
-            // VoiceChatActor가 없으면 생성 - 비식별 세션별단위로 생성
-            voiceCahtActor = actorSystem.ActorOf(Props.Create(() => 
-                new VoiceChatActor(ServiceProvider)), UserId);
-
-            AkkaService.AddActor(voiceChatActorKey, voiceCahtActor);
-        }
-
-        // UX를 제어권인 대리자 생성해 전달        
-        voiceCahtActor.Tell(CreateDynamicDelegate());
-
-        MyVoiceActor = voiceCahtActor;
 
     }
 

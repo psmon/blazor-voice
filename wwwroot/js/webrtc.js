@@ -7,6 +7,33 @@ let gainNode;
 let aiFaceAnimationActive = false;
 let aiFaceAnimationFrame = null;
 
+// Live2D 관련 전역 변수
+let live2dModel = null;
+let live2dApp = null;
+let live2dIdleMotion = "Idle";
+let live2dTalkMotion = "Talk";
+let live2D;
+
+// Live2D 모델 초기화 함수 (한 번만 호출)
+async function initLive2D() {
+
+}
+
+// 모션 실행 함수
+function playMotionByName(name) {
+    try {
+        const coreModel = L2Dwidget.live2DModel; // Live2DModel instance
+        const motions = coreModel.modelSetting.getMotionGroup(name); // 보통 여기서 모션 목록 확인 가능
+        const motionIndex = motions.findIndex(m => m.file.includes(name));
+        if (motionIndex >= 0) {
+            coreModel.startMotion(name, motionIndex, 0);
+        }
+    } catch (e) {
+        console.warn("모션 실행 실패", e);
+    }
+}
+
+
 async function playAudioBytes2(audioBytes) {
     try {
         // 오디오 컨텍스트 초기화 (전역에서 관리하거나 외부에서 주입 가능)
@@ -47,6 +74,7 @@ async function playAudioBytes(audioBytes, playbackRate, type, dotNetRef) {
 
         if (type === 2) {
             startAIFaceAnimation();
+            //playMotionByName("tap_body")
         }
 
         // 재생
@@ -68,6 +96,7 @@ async function playAudioBytes(audioBytes, playbackRate, type, dotNetRef) {
             } else if (type === 2) {
                 console.log("Type 2: AI재생완료");
                 stopAIFaceAnimation();
+                //playMotionByName("idle")
             } else if (type === 3) {
                 console.log("Type 3: 사용자 정의 작업");
             }
