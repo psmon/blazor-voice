@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System.IO;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Text;
@@ -84,6 +85,31 @@ namespace BlazorVoice.Services
 
             // MP3 데이터를 PCM 데이터로 변환
             return ConvertMp3ToFloatArray(audioBytes);
+        }
+
+        public async Task<string> ConvertVoiceToTextAsync(byte[] audioBytes, string fileName = "audio.wav", string language = "ko", bool stream = false)
+        {
+            using var content = new MultipartFormDataContent();
+            var audioContent = new ByteArrayContent(audioBytes);
+            audioContent.Headers.ContentType = new MediaTypeHeaderValue("audio/wav");
+            content.Add(audioContent, "file", fileName);
+            content.Add(new StringContent("whisper-1"), "model");
+            if (!string.IsNullOrEmpty(language))
+                content.Add(new StringContent(language), "language");
+            if (stream)
+                content.Add(new StringContent("true"), "stream");
+
+            var response = await _httpClient.PostAsync("audio/transcriptions", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new InvalidOperationException($"STT API 호출 실패: {response.ReasonPhrase}\n{error}");
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.GetProperty("text").GetString() ?? string.Empty;
         }
 
 

@@ -37,7 +37,7 @@ namespace BlazorVoice.Akka.Actor
 
         private OpenAIService _openAIService;
 
-        private int MaxAIWordCount = 100; // AI 응답 최대 단어 수 설정
+        private int MaxAIWordCount = 150; // AI 응답 최대 단어 수 설정
 
         private sealed class TimerKey
         {
@@ -122,7 +122,7 @@ namespace BlazorVoice.Akka.Actor
             _conversationHistory.Add($"User:{message}");
 
             // 최근 20개의 대화 기록을 가져옵니다.
-            var recentHistory = _conversationHistory.Skip(Math.Max(0, _conversationHistory.Count - 20)).ToList();
+            var recentHistory = _conversationHistory.Skip(Math.Max(0, _conversationHistory.Count - 100)).ToList();
 
             // 수정된 코드: ChatMessage 생성 시 올바른 정적 메서드 사용
             var aiResponse = await _openAIService.GetChatCompletion(
