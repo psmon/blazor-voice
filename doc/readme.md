@@ -15,7 +15,7 @@
 ![BlazorVoiceSystem](./system.png)
 
 
-- [한국어 문서](./kr/index.md)
+- [한국어 문서](./ko/index.md)
 - [English Documentation](./en/index.md)
 
 
