@@ -1,14 +1,9 @@
-﻿using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Net.WebSockets;
-using System.Text;
 using System.Text.Json;
 
-using NAudio.Wave;
-
-using OpenAI.Audio;
 using OpenAI.Chat;
+
 
 namespace BlazorVoice.Services
 {
@@ -34,7 +29,7 @@ namespace BlazorVoice.Services
             _httpClient = new HttpClient();
             _httpClient.BaseAddress = new Uri("https://api.openai.com/v1/");
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-
+            
             // WebSocket 초기화
             _webSocket = new ClientWebSocket();
 
@@ -53,6 +48,18 @@ namespace BlazorVoice.Services
         }
 
 
+        public float[] ConvertPcm16BytesToFloatArray(byte[] pcmBytes)
+        {
+            int sampleCount = pcmBytes.Length / 2;
+            float[] samples = new float[sampleCount];
+            for (int i = 0; i < sampleCount; i++)
+            {
+                short sample = (short)(pcmBytes[2 * i] | (pcmBytes[2 * i + 1] << 8));
+                samples[i] = sample / 32768f;
+            }
+            return samples;
+        }
+
         /// <summary>
         /// voice alloy, ash, ballad, coral, echo, fable, onyx, nova, sage, , shimme
         /// </summary>
@@ -66,7 +73,8 @@ namespace BlazorVoice.Services
             {
                 model = "gpt-4o-mini-tts",  // TTS 모델 이름
                 input = text,               // 변환할 텍스트
-                voice                       // 음성 스타일
+                voice,                       // 음성 스타일
+                response_format = "wav"
             };
             
             var ttsTask = _httpClient.PostAsJsonAsync("audio/speech", requestBody);
@@ -80,11 +88,10 @@ namespace BlazorVoice.Services
                 throw new InvalidOperationException($"TTS API 호출 실패: {response.ReasonPhrase}");
             }
 
-            // MP3 데이터를 byte 배열로 변환하여 반환
-            var audioBytes = await response.Content.ReadAsByteArrayAsync();
+            var readByte = await response.Content.ReadAsByteArrayAsync();
 
-            // MP3 데이터를 PCM 데이터로 변환
-            return ConvertMp3ToFloatArray(audioBytes);
+            return ConvertPcm16BytesToFloatArray(readByte);
+
         }
 
         public async Task<string> ConvertVoiceToTextAsync(byte[] audioBytes, string fileName = "audio.wav", string language = "ko", bool stream = false)
@@ -110,21 +117,6 @@ namespace BlazorVoice.Services
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);
             return doc.RootElement.GetProperty("text").GetString() ?? string.Empty;
-        }
-
-
-        private float[] ConvertMp3ToFloatArray(byte[] mp3Data)
-        {
-            using var mp3Stream = new MemoryStream(mp3Data);
-            using var mp3Reader = new Mp3FileReader(mp3Stream);
-
-            // PCM 데이터를 float 배열로 변환
-            var sampleProvider = mp3Reader.ToSampleProvider();
-            var totalSamples = (int)(mp3Reader.TotalTime.TotalSeconds * mp3Reader.WaveFormat.SampleRate * mp3Reader.WaveFormat.Channels);
-            var floatBuffer = new float[totalSamples];
-            int samplesRead = sampleProvider.Read(floatBuffer, 0, floatBuffer.Length);
-
-            return floatBuffer.Take(samplesRead).ToArray();
         }
 
 

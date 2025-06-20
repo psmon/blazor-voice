@@ -199,48 +199,7 @@
     private const int Channels = 1;
     private const int BytesPerSample = 4; // Float32Array
 
-    // PlayByte 함수 예시
-    private async Task PlayByte(byte[] audioBytes)
-    {
-        try
-        {
-            var wavBytes = ConvertFloat32ToWav(audioBytes, 48000, 1); // 샘플레이트/채널 JS와 일치시켜야 함
-            //var text = await OpenAIService.ConvertVoiceToTextAsync(wavBytes, "a.wav", "ko", true);
-            //Console.WriteLine($"PlayByte 호출: {audioBytes.Length} bytes - Text:{text}");            
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error in PlayByte: {ex.Message}");
-            return;
-        }
-    }
 
-    private byte[] ConvertFloat32ToWav(byte[] float32Bytes, int sampleRate = 48000, int channels = 1)
-    {
-        // Float32Array → float[] 변환
-        int floatCount = float32Bytes.Length / 4;
-        float[] floatSamples = new float[floatCount];
-        for (int i = 0; i < floatCount; i++)
-            floatSamples[i] = BitConverter.ToSingle(float32Bytes, i * 4);
-
-        // float → 16bit PCM 변환
-        byte[] pcm16Bytes = new byte[floatCount * 2];
-        for (int i = 0; i < floatCount; i++)
-        {
-            short val = (short)Math.Clamp(floatSamples[i] * 32767f, short.MinValue, short.MaxValue);
-            pcm16Bytes[i * 2] = (byte)(val & 0xFF);
-            pcm16Bytes[i * 2 + 1] = (byte)((val >> 8) & 0xFF);
-        }
-
-        // WAV 파일로 래핑
-        using var ms = new MemoryStream();
-        using (var writer = new NAudio.Wave.WaveFileWriter(ms, new NAudio.Wave.WaveFormat(sampleRate, 16, channels)))
-        {
-            writer.Write(pcm16Bytes, 0, pcm16Bytes.Length);
-            writer.Flush();
-        }
-        return ms.ToArray();
-    }
 
     [JSInvokable]
     public async Task SendAudioData(string audioDataJson)
@@ -279,7 +238,7 @@
                             //int minLength = MinAudioSeconds * SampleRate * Channels * BytesPerSample;
                             if (voiceCount > 150)
                             {
-                                await PlayByte(audioDataBuffer.ToArray());
+                                //await PlayByte(audioDataBuffer.ToArray());
                                 audioDataBuffer.Clear();
                                 voiceCount = 0;
                             }                            
